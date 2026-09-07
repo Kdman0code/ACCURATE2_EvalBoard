@@ -219,16 +219,22 @@ public partial class MainWindow : Window
     {
         // Extracting and converting data from the received string format.
         var parts = data.Split(',');
-        parts[3] = parts[3].Trim();
-        if (parts.Length == 4)
+
+        // Firmware (main.ino -> getOutputString) streams 9 comma-separated fields:
+        //   [0]=current(fA)  [1]=cp1Count  [2]=cp2Count  [3]=cp3Count
+        //   [4]=startInterval  [5]=endInterval  [6]=temperature  [7]=humidity  [8]=btn/LED status
+        // NOTE: the board must be in formatted mode (SERIal:RAW OFF) for [0]/[6]/[7] to be
+        // current(fA)/degC/%RH; in raw mode these are raw sensor counts.
+        if (parts.Length == 9)
         {
+            parts[8] = parts[8].Trim();
             // Assuming the current value received from the device is in femtoamps (fA) and needs conversion to Amperes (A).
             if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double currentInFemtoAmps) &&
-                double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double temperature) &&
-                double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double humidity))
+                double.TryParse(parts[6], NumberStyles.Float, CultureInfo.InvariantCulture, out double temperature) &&
+                double.TryParse(parts[7], NumberStyles.Float, CultureInfo.InvariantCulture, out double humidity))
             {
                 // Convert the binary string to an integer for button and LED states.
-                string btnLedBinaryString = parts[3];
+                string btnLedBinaryString = parts[8];
                 // Ensure the binary string is correctly padded to the expected length.
                 btnLedBinaryString = btnLedBinaryString.PadLeft(6, '0');
                 int btnLedStatus = Convert.ToInt32(btnLedBinaryString, 2); // Convert binary string to integer.
